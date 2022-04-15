@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Main Page</title>
+    <h1>Welcome!</h1>
+    <!--Getting all libraries, stylesheets, etc. needed-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--leaflet and  -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+          integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+          crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
+    <!--#LAB3 Newly added references-->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js"></script>
+    <!--Add turf for lab 5-->
+
+
+
+    <style>
+        #map {
+            position: relative;
+            top: 60px;
+            height: 500px;
+            width: 750px;
+            margin-left: auto;
+            margin-right: auto;
+
+        }
+
+
+        body {
+            background-image: url('backg.jpg');
+        }
+
+        div {
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #buttons{
+        	position: relative;
+        	top: 40px;
+        }
+        
+    </style>
+
+</head>
+<body>
+	<div id="buttons">
+	<!--Create button to refresh map-->
+	<button id="refresh" type="button" class="btn btn-secondary btn-block"> Refresh Map </button>	
+	<!--Create button to simplify-->
+	<button id="simplify" type="button" class="btn btn-info btn-block">Simplify Polyline </button>
+	</div>
+
+    <!--Putting map into a division map-->
+    <div id="map">
+
+    </div>
+
+
+    <script>
+        /*  #LAB3 STUFF   */
+        //Writing the script for the new stuff
+        //Layer for just the basemap
+        let incidents_none = L.tileLayer('https://api.mapbox.com/styles/v1/zianz/ckzytlhx400cr15oa167iizao/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiemlhbnoiLCJhIjoiY2t6eHZ0aGp0MDVqZTJwcXZucjRrcGRqeiJ9.d_Rb_6BaRZks6GCvbgUS5w', {
+            attribution: '<a href="https://www.mapbox.com/about/maps/" target="_blank">&copy; Mapbox</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>; <a href="https://www.mapbox.com/map-feedback/" target="_blank"> Improve this map</a>',
+        })
+        mapboxgl.accessToken = 'pk.eyJ1IjoiemlhbnoiLCJhIjoiY2t6eHZ0aGp0MDVqZTJwcXZucjRrcGRqeiJ9.d_Rb_6BaRZks6GCvbgUS5w'
+
+        //Initializing the map and setting its view to chosen geographical coordinates
+        var map = L.map('map').setView([51.0447, -114.0719], 11);
+
+
+        //By default, the baselayer of the mapbox map is shown
+        incidents_none.addTo(map);
+
+        //--------------------------------------------------------------------------------------------------------------
+        //Stores polyline coordinates named latlngs
+        var latlngs=[];
+        //create a polyline using latlngs
+		var lineField=L.polyline(latlngs, {color:'green'}).addTo(map);
+		//When mouse is clicked, draw a line for each point by storing clicked lat long in latlngs
+        map.on('click', function(e) {
+        	lineField.remove(map);
+        	latlngs.push([e.latlng.lat,e.latlng.lng]);
+        	lineField=L.polyline(latlngs, {color:'green'}).addTo(map);
+        });
+        // when mouse is right clicked, remove layers and empty latlngs
+        map.on('contextmenu', function(e){
+        	lineField.remove(map);
+        	latlngs=[];
+        });
+        //Create the geoJSON object that will be the simplified polyline
+        var simplified_all=new L.geoJSON().addTo(map);
+        var simp;
+        const btn = document.getElementById("simplify");
+        btn.onclick = function () {
+        	simp = turf.simplify(lineField.toGeoJSON(), {tolerance: 0.005, highQuality: false});
+        	simplified_all.addData(simp);
+        }
+        const refreshbtn=document.getElementById("refresh");
+        refreshbtn.onclick=function(){
+        	simplified_all.remove(map);
+        	simplified_all=new L.geoJSON().addTo(map);
+        	lineField.remove(map);
+        	latlngs=[];
+        }
+        //-------------------------------------------------------------------------------------------------------------
+
+
+    </script>
+</body>
+</html>
+
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
